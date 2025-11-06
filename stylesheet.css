@@ -1,0 +1,122 @@
+/* ------------------------------------ */
+/* Base & Global Styles */
+/* ------------------------------------ */
+
+body {
+    font-family: 'Inter', sans-serif;
+    scroll-behavior: smooth;
+    overflow-x: hidden; /* Prevent horizontal scroll on mobile */
+    min-height: 100vh;
+}
+
+/* Base background container for dynamic effects */
+#weather-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -2; /* Set to -2 to keep it behind the main content */
+    transition: background-color 1.5s ease-in-out;
+    background-color: #10151A;
+    pointer-events: none;
+}
+
+.section-card {
+    /* Transparent, blurred background for cards */
+    background-color: rgba(30, 41, 59, 0.7); 
+    backdrop-filter: blur(8px);
+}
+
+/* Custom Scrollbar for Hourly Forecast on Mobile */
+.hourly-scroll {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+}
+.hourly-scroll::-webkit-scrollbar {
+    display: none;
+}
+
+/* Loading Spinner Style */
+.loading-ring {
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top: 4px solid #3b82f6;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* ------------------------------------ */
+/* Dynamic Background Effects */
+/* ------------------------------------ */
+
+/* Rain Effect */
+.rain-drop {
+    position: absolute;
+    width: 2px;
+    height: 15px;
+    background: rgba(174, 194, 224, 0.6);
+    border-radius: 50%;
+    transform: rotate(15deg);
+    will-change: transform, opacity;
+}
+
+/* Snow Effect */
+.snow-flake {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 50%;
+    filter: blur(0.5px);
+    will-change: transform, opacity;
+}
+
+/* Sun Glow Effect */
+#sun-glow {
+    position: absolute;
+    top: 10%;
+    right: 5%;
+    width: 250px;
+    height: 250px;
+    background: radial-gradient(circle, rgba(255, 215, 0, 0.4) 0%, rgba(255, 140, 0, 0) 70%);
+    border-radius: 50%;
+    will-change: transform, background;
+}
+
+/* Night Sky Effects: Stars */
+.star {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 50%;
+    will-change: transform, opacity;
+   
+}
+
+
+
+/* Keyframe for simple star flicker animation */
+@keyframes flicker {
+    0%, 100% { opacity: 0.8; }
+    50% { opacity: 0.3; }
+}
+.star-flicker {
+    animation: flicker 4s infinite alternate;
+}
+
+/* Night Sky Effects: Shooting Star */
+.shooting-star {
+    position: absolute;
+    background: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 255, 255, 1));
+    width: 50px;
+    height: 2px;
+    border-radius: 50%;
+    will-change: transform, opacity;
+}

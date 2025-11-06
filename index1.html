@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AeroCast - AI Weather Predictor</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  
+  <link rel="stylesheet" href="stylesheet.css"> 
+  <script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                colors: {
+                    'dark-bg': '#10151A',
+                    'dark-card': '#1E2530',
+                    'accent-blue': '#4a90e2',
+                },
+                fontFamily: {
+                    sans: ['Inter', 'sans-serif'],
+                }
+            }
+        }
+    }
+  </script>
+</head>
+
+<body class="min-h-screen bg-dark-bg text-white font-sans">
+
+  <div id="weather-background" class="fixed top-0 left-0 w-full h-full -z-20 transition-colors duration-1000"></div>
+
+  <nav class="fixed top-0 left-0 w-full bg-dark-bg/80 backdrop-blur-md shadow-lg flex justify-between items-center px-4 py-3 z-50 border-b border-gray-700">
+    <div class="flex items-center space-x-2">
+      <i class="fas fa-cloud-sun text-accent-blue text-3xl animate-pulse"></i>
+      <span class="text-2xl font-extrabold text-white">AeroCast</span>
+    </div>
+    
+    <div class="space-x-4 hidden md:flex">
+      <a href="#weather-dashboard" class="px-3 py-1 text-white hover:text-accent-blue transition">Home</a>
+      <a href="#about-section" class="px-3 py-1 text-white hover:text-accent-blue transition">About</a>
+      <a href="#features-section" class="px-3 py-1 text-white hover:text-accent-blue transition">Features</a>
+      <a href="#contact-section" class="px-3 py-1 text-white hover:text-accent-blue transition">Contact</a>
+    </div>
+
+    <div class="flex items-center space-x-3">
+        <button class="bg-blue-600 px-3 py-1 rounded-full text-sm font-semibold hover:bg-blue-700 transition" onclick="getCurrentLocation()">
+            <i class="fas fa-location-arrow mr-1"></i> Use GPS
+        </button>
+        <button id="mobile-menu-btn" class="text-white md:hidden">
+            <i class="fas fa-bars text-xl"></i>
+        </button>
+    </div>
+  </nav>
+
+  <div id="mobile-menu" class="hidden fixed top-16 right-0 bg-dark-bg/95 backdrop-blur-md shadow-lg rounded-bl-2xl z-40 p-4 border border-gray-700">
+    <div class="flex flex-col space-y-2">
+      <a href="#weather-dashboard" class="px-4 py-2 text-white hover:bg-gray-700 rounded-lg">Home</a>
+      <a href="#about-section" class="px-4 py-2 text-white hover:bg-gray-700 rounded-lg">About</a>
+      <a href="#features-section" class="px-4 py-2 text-white hover:bg-gray-700 rounded-lg">Features</a>
+      <a href="#contact-section" class="px-4 py-2 text-white hover:bg-gray-700 rounded-lg">Contact</a>
+    </div>
+  </div>
+
+
+  <div id="weather-dashboard" class="pt-24 px-4 pb-12 max-w-4xl mx-auto">
+    
+    <div class="mb-8">
+        <div class="flex items-center gap-2 bg-dark-card p-2 rounded-xl shadow-xl">
+            <i class="fas fa-search text-gray-400 ml-2"></i>
+            <input id="city-input" type="text" placeholder="Search city or use current location..." 
+                class="flex-grow bg-transparent text-white p-2 border-none focus:ring-0 outline-none placeholder-gray-500">
+            <button onclick="searchWeather()" class="px-4 py-2 bg-accent-blue text-white rounded-lg hover:bg-blue-600 transition">
+                <i class="fas fa-magnifying-glass"></i>
+            </button>
+        </div>
+    </div>
+
+    <section id="current-weather" class="text-center mb-8 p-4 rounded-xl">
+        <h1 class="text-5xl font-extrabold text-white" id="city-name">--</h1>
+        <div class="text-8xl font-light mt-4 mb-2">
+            <span id="main-temp">27</span><sup class="text-4xl">°</sup>
+        </div>
+        <p class="text-2xl font-semibold text-gray-300" id="weather-desc">Mostly Clear</p>
+        <p class="text-lg text-gray-500" id="feels-like">Feels like 27°</p>
+    </section>
+
+    <section id="hourly-section" class="mb-8 p-4 bg-dark-card rounded-2xl shadow-xl">
+        <h3 class="text-xl font-bold mb-4">Hourly Forecast</h3>
+        <div id="hourly-forecast" class="flex overflow-x-auto space-x-4 pb-2">
+            <div class="hourly-item flex flex-col items-center justify-between p-3 rounded-xl bg-gray-700/30 min-w-[70px]">
+                <span class="text-sm font-semibold">05:30</span>
+                <i class="fas fa-sun text-orange-400 text-xl my-2"></i>
+                <span class="text-lg font-bold">27°</span>
+                <span class="text-xs text-gray-400">0%</span>
+            </div>
+            <div class="hourly-item flex flex-col items-center justify-between p-3 rounded-xl bg-gray-700/30 min-w-[70px]">
+                <span class="text-sm font-semibold">06:30</span>
+                <i class="fas fa-cloud-sun text-yellow-400 text-xl my-2"></i>
+                <span class="text-lg font-bold">26°</span>
+                <span class="text-xs text-gray-400">0%</span>
+            </div>
+        </div>
+        <button onclick="showDetailsModal('hourly')" class="w-full mt-4 py-2 bg-blue-600 rounded-lg font-semibold hover:bg-blue-700 transition">See 24-Hour Details</button>
+    </section>
+
+    <section id="details-section" class="mb-8 p-4 bg-dark-card rounded-2xl shadow-xl">
+        <h3 class="text-xl font-bold mb-4">Current Details</h3>
+        <div class="space-y-3">
+            <div class="flex justify-between items-center border-b border-gray-700 pb-2">
+                <span class="text-gray-400 flex items-center gap-2"><i class="fas fa-cloud-rain"></i> Precipitation</span>
+                <span class="font-semibold" id="precipitation">0%</span>
+            </div>
+            <div class="flex justify-between items-center border-b border-gray-700 pb-2">
+                <span class="text-gray-400 flex items-center gap-2"><i class="fas fa-temperature-arrow-up"></i> High & Low</span>
+                <span class="font-semibold" id="high-low">28°/18°</span>
+            </div>
+            <div class="flex justify-between items-center border-b border-gray-700 pb-2">
+                <span class="text-gray-400 flex items-center gap-2"><i class="fas fa-wind"></i> Wind</span>
+                <span class="font-semibold" id="wind-speed-details">NNW 14 km/h</span>
+            </div>
+            <div class="flex justify-between items-center border-b border-gray-700 pb-2">
+                <span class="text-gray-400 flex items-center gap-2"><i class="fas fa-droplet"></i> Humidity</span>
+                <span class="font-semibold" id="humidity">45%</span> 
+            </div>
+            <div class="flex justify-between items-center border-b border-gray-700 pb-2">
+                <span class="text-gray-400 flex items-center gap-2"><i class="fas fa-sun"></i> UV Index</span>
+                <span class="font-semibold" id="uv-index">0 (Low)</span> 
+            </div>
+            <div class="flex justify-between items-center">
+                <span class="text-gray-400 flex items-center gap-2"><i class="fas fa-thermometer-half"></i> Dew point</span>
+                <span class="font-semibold" id="dew-point">10°</span>
+            </div>
+            
+        </div>
+    </section>
+
+    <section id="daily-section" class="mb-8 p-4 bg-dark-card rounded-2xl shadow-xl">
+        <h3 class="text-xl font-bold mb-4">Daily Forecast</h3>
+        <div id="daily-forecast" class="space-y-3">
+            <div class="daily-item flex justify-between items-center">
+                <span class="font-semibold text-gray-300 w-1/4">Today</span>
+                <i class="fas fa-cloud-sun text-yellow-400 text-xl w-1/4 text-center"></i>
+                <span class="font-bold text-lg w-1/4 text-right">28°<span class="font-normal text-gray-400">/18°</span></span>
+                <span class="text-sm text-gray-500 w-1/4 text-right">0%</span>
+            </div>
+        </div>
+        <button onclick="showDetailsModal('daily')" class="w-full mt-4 py-2 bg-blue-600 rounded-lg font-semibold hover:bg-blue-700 transition">See daily-forecast Details</button>
+    </section>
+
+    <section id="radar-section" class="mb-8 p-4 bg-dark-card rounded-2xl shadow-xl">
+        <h3 class="text-xl font-bold mb-4">Radar</h3>
+        <div class="h-64 rounded-xl overflow-hidden relative">
+            <img src="https://placehold.co/800x600/18202b/ffffff?text=Interactive+Radar+Map" onerror="this.onerror=null;this.src='https://placehold.co/800x600/18202b/ffffff?text=Radar+Data+Unavailable';" alt="Radar Map Placeholder" class="w-full h-full object-cover">
+            <div class="absolute top-2 left-2 bg-black/50 text-white text-sm p-1 rounded-lg">27° • Location</div>
+        </div>
+    </section>
+
+    <section id="air-quality-section" class="mb-8 p-4 bg-dark-card rounded-2xl shadow-xl">
+        <h3 class="text-xl font-bold mb-4 flex items-center gap-2"><i class="fas fa-lungs text-green-400"></i> Air Quality</h3>
+        <div class="text-center p-4 bg-gray-800 rounded-lg">
+            <div class="text-6xl font-extrabold text-yellow-400" id="aqi-value">102</div>
+            <p class="text-2xl font-semibold mb-2" id="aqi-category">Unhealthy for sensitive groups</p>
+            <p class="text-gray-400 text-sm">If you have respiratory issues, the air quality will be a problem today.</p>
+        </div>
+        
+        <div class="mt-4">
+            <div class="w-full bg-gray-700 rounded-full h-3 relative">
+                <div id="aqi-bar" class="h-3 rounded-full transition-all duration-700" style="width: 20%; background-color: #fce300;"></div>
+                <div id="aqi-dot" class="absolute -top-1 left-[19%] w-3 h-3 rounded-full border-2 border-dark-card bg-white"></div>
+            </div>
+            <button onclick="showDetailsModal('aqi')" class="w-full mt-4 py-2 bg-blue-600 rounded-lg font-semibold hover:bg-blue-700 transition">See More Details</button>
+        </div>
+    </section>
+
+
+    <section id="about-section" class="py-16 px-4">
+        <div class="container max-w-4xl mx-auto text-center">
+            <h2 class="text-4xl font-bold text-accent-blue mb-6">About Our App</h2>
+            <p class="text-xl text-gray-300 leading-relaxed mb-6">
+                AeroCast helps you check live weather conditions, get future forecasts,
+                and explore climate patterns. Built with modern design & AI-powered insights.
+            </p>
+            <p class="text-lg text-gray-400 mb-8">
+                Our advanced machine learning algorithms analyze historical weather data to provide 
+                accurate 7-day forecasts with confidence scores. Get real-time updates, hourly forecasts,
+                air quality information, and severe weather alerts all in one beautiful interface.
+            </p>
+            <a href="#contact-section" class="px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition inline-block font-semibold">Contact Us</a>
+        </div>
+    </section>
+
+    <section id="features-section" class="py-16 px-4">
+        <div class="max-w-6xl mx-auto px-4">
+            <h2 class="text-4xl font-bold text-center mb-4 text-accent-blue">Our Amazing Features</h2>
+            <p class="text-center text-gray-400 mb-12 text-lg">Everything you need for accurate weather forecasting</p>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="p-6 bg-dark-card rounded-2xl shadow-xl text-center">
+                    <div class="text-5xl mb-4">🌤️</div>
+                    <h3 class="text-xl font-bold mb-3">Live Weather</h3>
+                    <p class="text-gray-400">Get real-time temperature, humidity, wind speed & atmospheric conditions.</p>
+                </div>
+                
+                <div class="p-6 bg-dark-card rounded-2xl shadow-xl text-center">
+                    <div class="text-5xl mb-4">📅</div>
+                    <h3 class="text-xl font-bold mb-3">7-Day Forecast</h3>
+                    <p class="text-gray-400">Plan ahead with detailed weekly forecasts powered by machine learning.</p>
+                </div>
+                
+                <div class="p-6 bg-dark-card rounded-2xl shadow-xl text-center">
+                    <div class="text-5xl mb-4">📊</div>
+                    <h3 class="text-xl font-bold mb-3">Weather Dashboard</h3>
+                    <p class="text-gray-400">View your saved locations and comprehensive weather statistics.</p>
+                </div>
+                
+                <div class="p-6 bg-dark-card rounded-2xl shadow-xl text-center">
+                    <div class="text-5xl mb-4">⚡</div>
+                    <h3 class="text-xl font-bold mb-3">AI Insights</h3>
+                    <p class="text-gray-400">Smart predictions powered by advanced machine learning algorithms.</p>
+                </div>
+
+                <div class="p-6 bg-dark-card rounded-2xl shadow-xl text-center">
+                    <div class="text-5xl mb-4">🌍</div>
+                    <h3 class="text-xl font-bold mb-3">Global Coverage</h3>
+                    <p class="text-gray-400">Access weather data for any location worldwide with GPS support.</p>
+                </div>
+
+                <div class="p-6 bg-dark-card rounded-2xl shadow-xl text-center">
+                    <div class="text-5xl mb-4">🔔</div>
+                    <h3 class="text-xl font-bold mb-3">Weather Alerts</h3>
+                    <p class="text-gray-400">Receive notifications for severe weather warnings and advisories.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="py-16 px-4">
+        <div class="max-w-6xl mx-auto">
+            <div class="p-8 bg-dark-card rounded-2xl shadow-xl">
+                <h2 class="text-4xl font-bold text-center mb-12 text-accent-blue">Trusted by Millions</h2>
+                
+                <div class="grid md:grid-cols-4 gap-8 text-center">
+                    <div class="p-2">
+                        <div class="text-5xl font-bold text-blue-400 mb-2">5M+</div>
+                        <p class="text-gray-300 font-semibold">Active Users</p>
+                    </div>
+                    
+                    <div class="p-2">
+                        <div class="text-5xl font-bold text-green-400 mb-2">85%</div>
+                        <p class="text-gray-300 font-semibold">Accuracy Rate</p>
+                    </div>
+                    
+                    <div class="p-2">
+                        <div class="text-5xl font-bold text-orange-400 mb-2">200+</div>
+                        <p class="text-gray-300 font-semibold">Countries Covered</p>
+                    </div>
+                    
+                    <div class="p-2">
+                        <div class="text-5xl font-bold text-purple-400 mb-2">24/7</div>
+                        <p class="text-gray-300 font-semibold">Live Updates</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="py-16 px-4">
+        <div class="max-w-6xl mx-auto">
+            <h2 class="text-4xl font-bold text-center mb-12 text-accent-blue">How It Works</h2>
+            
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="p-6 bg-dark-card rounded-2xl shadow-xl text-center">
+                    <div class="w-20 h-20 bg-blue-700 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <span class="text-3xl font-bold text-white">1</span>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Search Location</h3>
+                    <p class="text-gray-400">Enter any city name or use your current GPS location to get started.</p>
+                </div>
+                
+                <div class="p-6 bg-dark-card rounded-2xl shadow-xl text-center">
+                    <div class="w-20 h-20 bg-purple-700 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <span class="text-3xl font-bold text-white">2</span>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">AI Analysis</h3>
+                    <p class="text-gray-400">Our ML models analyze weather patterns and historical data in real-time.</p>
+                </div>
+                
+                <div class="p-6 bg-dark-card rounded-2xl shadow-xl text-center">
+                    <div class="w-20 h-20 bg-green-700 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <span class="text-3xl font-bold text-white">3</span>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Get Predictions</h3>
+                    <p class="text-gray-400">Receive accurate forecasts with hourly, daily, and weekly predictions.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="py-16 px-4" id="contact-section">
+        <div class="max-w-4xl mx-auto">
+            <div class="p-10 text-center bg-gradient-to-r from-blue-700 to-indigo-800 rounded-2xl shadow-2xl text-white">
+                <h2 class="text-4xl font-bold mb-4">Ready to Check the Weather?</h2>
+                <p class="text-xl mb-8 opacity-90">Join millions of users who trust AeroCast for accurate forecasts</p>
+                <div class="flex justify-center gap-4 flex-wrap">
+                    <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="px-8 py-4 bg-white text-blue-700 rounded-xl hover:bg-gray-100 transition font-bold text-lg">
+                        Start Now (Scroll Up)
+                    </button>
+                    <div class="px-8 py-4 bg-transparent border-2 border-white text-white rounded-xl font-bold text-lg">
+                        Email: info@aerocast.com
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="bg-gray-900 text-white py-12 px-4 mt-16 rounded-t-xl">
+        <div class="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8">
+            <div>
+                <h3 class="text-xl font-bold mb-4 text-accent-blue">AeroCast</h3>
+                <p class="text-sm text-gray-400">AI Powered Weather Prediction for a smarter tomorrow.</p>
+            </div>
+            <div>
+                <h3 class="text-xl font-bold mb-4">Quick Links</h3>
+                <ul class="space-y-2 text-gray-400">
+                    <li><a href="#weather-dashboard" class="hover:text-white transition">Dashboard</a></li>
+                    <li><a href="#about-section" class="hover:text-white transition">About Us</a></li>
+                    <li><a href="#features-section" class="hover:text-white transition">Features</a></li>
+                </ul>
+            </div>
+            <div>
+                <h3 class="text-xl font-bold mb-4">Support</h3>
+                <ul class="space-y-2 text-gray-400">
+                    <li><a href="#" class="hover:text-white transition">FAQ</a></li>
+                    <li><a href="#" class="hover:text-white transition">Privacy Policy</a></li>
+                    <li><a href="#" class="hover:text-white transition">Terms of Service</a></li>
+                </ul>
+            </div>
+            <div>
+                <h3 class="text-xl font-bold mb-4">Connect</h3>
+                <div class="flex space-x-4">
+                    <a href="#" class="text-2xl hover:text-accent-blue transition"><i class="fab fa-facebook"></i></a>
+                    <a href="#" class="text-2xl hover:text-accent-blue transition"><i class="fab fa-twitter"></i></a>
+                    <a href="#" class="text-2xl hover:text-accent-blue transition"><i class="fab fa-instagram"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="text-center text-sm text-gray-500 mt-10 border-t border-gray-700 pt-6">
+            &copy; 2024 AeroCast. All rights reserved.
+        </div>
+    </footer>
+
+  </div>
+
+  <div id="loading" class="hidden fixed inset-0 bg-black/70 backdrop-blur-md z-[100] flex items-center justify-center">
+    <div class="bg-dark-card rounded-2xl p-8 text-center shadow-2xl">
+      <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-accent-blue mx-auto mb-4"></div>
+      <p class="text-white font-semibold">Gathering ML predictions and live data...</p>
+    </div>
+  </div>
+
+  <div id="details-modal" class="fixed inset-0 z-40 bg-gray-900/80 hidden transition-opacity duration-300 overflow-y-auto">
+      <div class="flex items-center justify-center min-h-screen p-4">
+          <div class="bg-gray-800 w-full max-w-2xl p-6 rounded-2xl shadow-2xl transform transition-all duration-300">
+              
+              <div class="flex justify-between items-center mb-6 border-b border-gray-700 pb-3">
+                  <h2 id="modal-title" class="text-2xl font-bold text-white">More Details</h2>
+                  <button onclick="document.getElementById('details-modal').classList.add('hidden')" class="text-gray-400 hover:text-white transition">
+                      <i class="fas fa-times text-2xl"></i>
+                  </button>
+              </div>
+              
+              <div id="modal-content-area" class="text-gray-300 space-y-4">
+                  </div>
+              
+              <div class="mt-6 pt-4 border-t border-gray-700 text-right">
+                  <button onclick="document.getElementById('details-modal').classList.add('hidden')" class="bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-lg font-semibold transition duration-300">Close</button>
+              </div>
+
+          </div>
+      </div>
+  </div>
+
+  <div id="alert-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-md z-[100] flex items-center justify-center p-4">
+    <div class="bg-red-900 border border-red-700 rounded-xl p-6 shadow-2xl max-w-sm w-full">
+        <h3 class="text-xl font-bold text-red-300 mb-3 flex items-center gap-2"><i class="fas fa-triangle-exclamation"></i> Error/Alert</h3>
+        <p class="text-red-100" id="alert-message">City not found or server error occurred.</p>
+        <button onclick="document.getElementById('alert-modal').classList.add('hidden')" class="mt-4 w-full py-2 bg-red-700 hover:bg-red-600 transition rounded-lg font-semibold">Close</button>
+    </div>
+  </div>
+
+  <script src="logic.js"></script>
+</body>
+</html>
